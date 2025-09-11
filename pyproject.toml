@@ -1,0 +1,14 @@
+[project]
+name = "synthesis-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ase>=3.26.0",
+    "h5py>=3.14.0",
+    "mace-torch>=0.3.14",
+    "matminer>=0.9.3",
+    "mp-api>=0.45.8",
+    "pymatgen>=2025.6.14",
+]
