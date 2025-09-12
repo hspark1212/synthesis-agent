@@ -4,6 +4,7 @@ SKY Synthesis Agent - Core implementation for materials synthesis discovery
 
 import json
 import os
+import re
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from src.search_api import SearchAPI
 from src.agent import SynthesisAgent as CoreSynthesisAgent
 from src.schema import Neighbor
 from src.recursive_synthesis import RecursiveSynthesisSearch
+from sky.report.html_generator import HTMLReportGenerator, SynthesisReportData
 
 DEFAULT_MODEL = "o3"
 
@@ -390,6 +392,59 @@ def analyze_synthesis_parameters(synthesis_text: str) -> str:
 
 
 @function_tool
+def generate_synthesis_html_report(
+    synthesis_output: str,
+    material_formula: str,
+    output_filename: Optional[str] = None
+) -> str:
+    """
+    Generate a professional HTML report from synthesis analysis output.
+    
+    Args:
+        synthesis_output: The formatted synthesis analysis text output
+        material_formula: The target material formula (e.g., "NaFe2O4")
+        output_filename: Optional filename for the HTML report (defaults to formula-based name)
+    
+    Returns:
+        Path to the generated HTML report file
+    """
+    try:
+        generator = HTMLReportGenerator()
+        
+        # Parse the synthesis output
+        report_data = generator.parse_agent_output(synthesis_output)
+        
+        # Ensure material formula is set
+        if not report_data.material_formula:
+            report_data.material_formula = material_formula
+            report_data.material_formula_html = generator._formula_to_html(material_formula)
+        
+        # Generate output path
+        if output_filename:
+            output_path = Path(output_filename)
+        else:
+            safe_name = re.sub(r'[^\w\s-]', '', material_formula)
+            output_path = Path(f"{safe_name}_synthesis_report.html")
+        
+        # Generate and save the report
+        saved_path = generator.save_report(report_data, output_path)
+        
+        return json.dumps({
+            "status": "success",
+            "report_path": str(saved_path.absolute()),
+            "material": material_formula,
+            "message": f"HTML report generated successfully: {saved_path.name}"
+        }, indent=2)
+        
+    except Exception as e:
+        return json.dumps({
+            "error": str(e),
+            "material": material_formula,
+            "message": "Failed to generate HTML report"
+        }, indent=2)
+
+
+@function_tool
 def recursive_synthesis_search(
     target_formula: str,
     max_depth: int = 3,
@@ -466,7 +521,8 @@ class SKYSynthesisAgent:
                 get_material_properties,
                 get_synthesis_recipes,
                 analyze_synthesis_parameters,
-                recursive_synthesis_search
+                recursive_synthesis_search,
+                generate_synthesis_html_report
             ]
         )
     
@@ -532,6 +588,9 @@ class SKYSynthesisAgent:
         - Pros/cons of each approach
         
         Focus on practical, reproducible synthesis procedures.
+        
+        IMPORTANT: After completing the synthesis analysis, ALWAYS generate an HTML report
+        using generate_synthesis_html_report with your complete analysis output.
         """
         
         result = Runner.run_sync(self.agent, input=prompt, session=self.session)

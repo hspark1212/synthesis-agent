@@ -29,7 +29,7 @@ def show_banner():
     """Display SKY banner"""
     terminal_width = shutil.get_terminal_size().columns
     logo = get_responsive_logo(terminal_width)
-    console.print(Panel(logo, style="bold cyan", expand=False))
+    console.print(logo, style="bold cyan")
 
 
 @app.command()
@@ -37,7 +37,9 @@ def search(
     query: str = typer.Argument(..., help="Material composition (e.g., Fe2O3) or CIF file path"),
     top_n: int = typer.Option(10, "--top", "-n", help="Number of similar materials"),
     structure: bool = typer.Option(False, "--structure", "-s", help="Force structure-based search"),
-    show_synthesis: bool = typer.Option(True, "--synthesis/--no-synthesis", help="Show synthesis recipes")
+    show_synthesis: bool = typer.Option(True, "--synthesis/--no-synthesis", help="Show synthesis recipes"),
+    html_report: bool = typer.Option(False, "--html", "-h", help="Generate HTML report"),
+    output_dir: Path = typer.Option(Path.cwd(), "--output", "-o", help="Output directory for HTML report")
 ):
     """
     Search for similar materials and their synthesis recipes.
@@ -45,8 +47,9 @@ def search(
     Examples:
         sky search Fe2O3                     # Composition search
         sky search LiFePO4 --top 5           # Top 5 similar materials
+        sky search Fe2O3 --html              # Generate HTML report
         sky search /path/to/file.cif         # Structure search from CIF
-        sky search LiFe.cif                  # Local CIF file
+        sky search LiFe.cif --html -o reports # Save HTML to reports directory
     """
     show_banner()
     
@@ -56,12 +59,15 @@ def search(
     if is_cif:
         console.print(f"[bold cyan]🔬 Analyzing structure from CIF file:[/] {query}\n")
         search_type = "structure"
+        material_name = Path(query).stem
     else:
         console.print(f"[bold cyan]🔍 Searching for materials similar to:[/] {query}\n")
         search_type = "composition"
+        material_name = query
     
     try:
         from ..core.synthesis_agent import SKYSynthesisAgent
+        from ..report.html_generator import HTMLReportGenerator
         
         # Initialize agent
         console.print("[dim]Initializing SKY agent...[/]")
@@ -75,6 +81,34 @@ def search(
         # Display results
         console.print("\n[bold green]📊 Results:[/]\n")
         console.print(Markdown(result))
+        
+        # Generate HTML report if requested
+        if html_report:
+            console.print("\n[bold cyan]📄 Generating HTML report...[/]")
+            generator = HTMLReportGenerator()
+            report_data = generator.parse_agent_output(result)
+            
+            # Ensure material formula is set
+            if not report_data.material_formula:
+                report_data.material_formula = material_name
+                report_data.material_formula_html = generator._formula_to_html(material_name)
+            
+            # Create output directory if needed
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Generate filename
+            import re
+            safe_name = re.sub(r'[^\w\s-]', '', material_name)
+            output_path = output_dir / f"{safe_name}_synthesis_report.html"
+            
+            # Save report
+            saved_path = generator.save_report(report_data, output_path)
+            console.print(f"[bold green]✅ HTML report saved:[/] {saved_path}")
+            
+            # Optionally open in browser
+            if typer.confirm("Open report in browser?", default=True):
+                import webbrowser
+                webbrowser.open(f"file://{saved_path.absolute()}")
         
     except Exception as e:
         console.print(f"[bold red]❌ Error:[/] {e}")
