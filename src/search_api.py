@@ -1,4 +1,5 @@
 import h5py
+import numpy as np
 from pymatgen.core import Composition, Structure
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
@@ -60,16 +61,18 @@ class SearchAPI:
         )
         distances = distances.squeeze()
         indices = indices.squeeze()
+        confidences = np.exp(-distances / 3)
 
         # Collect results
         results = []
-        for i, (dist, idx) in enumerate(zip(distances, indices)):
+        for i, idx in enumerate(indices):
             results.append(
                 Neighbor(
                     neighbor_index=i,
                     material_id=self.mp_data["material_ids"][idx].item(),
                     formula=self.mp_data["formulas"][idx].item(),
-                    distance=dist.item(),
+                    distance=distances[i].item(),
+                    confidence=confidences[i].item(),
                 )
             )
         return results
