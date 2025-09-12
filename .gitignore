@@ -16,6 +16,12 @@ wheels/
 # Debug files
 demo*
 tmp*
+*.cif
 
 # Large data files
 assets/embedding/mp_dataset_structure_mace.h5
+
+# Agents
+openai-agents-python/
+CLAUDE.md
+AGENTS.md
