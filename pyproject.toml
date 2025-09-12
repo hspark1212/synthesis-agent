@@ -16,6 +16,7 @@ dependencies = [
     "openai>=1.0.0",
     "monty>=2025.0.0",
     "python-dotenv>=1.0.0",
+    "jupyterlab>=4.4.7",
 ]
 
 [project.scripts]

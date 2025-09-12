@@ -49,3 +49,7 @@ class SynthesisAgent:
     def get_structure_by_material_id(self, material_id: str) -> Structure:
         structure = self.mpr.materials.get_structure_by_material_id(material_id)
         return structure
+
+
+class SynthesisLLMAgent(SynthesisAgent):
+    pass
