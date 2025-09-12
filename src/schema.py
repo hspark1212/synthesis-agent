@@ -8,6 +8,7 @@ class Neighbor(BaseModel):
     material_id: str
     formula: str
     distance: float
+    confidence: float
 
 
 __all__ = ["Neighbor", "SynthesisRecipe", "SummaryDoc"]
