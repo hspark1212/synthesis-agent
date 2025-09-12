@@ -23,5 +23,6 @@ assets/embedding/mp_dataset_structure_mace.h5
 
 # Agents
 openai-agents-python/
+.serena/
 CLAUDE.md
 AGENTS.md
