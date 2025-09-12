@@ -1,7 +1,7 @@
 [project]
 name = "synthesis-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "SKY - Synthesis Knowledge Yield Agent for materials synthesis discovery"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -11,4 +11,15 @@ dependencies = [
     "matminer>=0.9.3",
     "mp-api>=0.45.8",
     "pymatgen>=2025.6.14",
+    "typer>=0.17.0",
+    "rich>=14.0.0",
+    "openai>=1.0.0",
+    "monty>=2025.0.0",
+    "python-dotenv>=1.0.0",
 ]
+
+[project.scripts]
+sky = "sky.cli.main:main"
+
+[tool.setuptools]
+packages = ["sky", "sky.cli", "sky.core", "src", "src.utils"]
