@@ -15,6 +15,7 @@ from src.embedding import InputType
 from src.search_api import SearchAPI
 from src.agent import SynthesisAgent as CoreSynthesisAgent
 from src.schema import Neighbor
+from src.recursive_synthesis import RecursiveSynthesisSearch
 
 DEFAULT_MODEL = "o3"
 
@@ -388,6 +389,57 @@ def analyze_synthesis_parameters(synthesis_text: str) -> str:
         }, indent=2)
 
 
+@function_tool
+def recursive_synthesis_search(
+    target_formula: str,
+    max_depth: int = 3,
+    min_confidence: float = 0.7,
+    n_initial_neighbors: int = 30
+) -> str:
+    """
+    Perform recursive best-guess search for synthesis recipes.
+    
+    This advanced algorithm recursively explores similar materials when direct recipes
+    are not available, using confidence scores to guide the search.
+    
+    Args:
+        target_formula: Target material composition (e.g., "LiFe2O4")
+        max_depth: Maximum recursion depth (default 3)
+        min_confidence: Minimum confidence threshold (default 0.7)
+        n_initial_neighbors: Initial neighbors to explore (default 30)
+    
+    Returns:
+        JSON string with recursive search results and best guess synthesis
+    """
+    try:
+        # Initialize recursive search
+        recursive_search = RecursiveSynthesisSearch(
+            synthesis_agent=CoreSynthesisAgent(),
+            max_depth=max_depth,
+            min_confidence=min_confidence,
+            verbose=True  # Enable progress printing
+        )
+        
+        # Perform recursive search
+        results = recursive_search.search(
+            target_formula=target_formula,
+            n_initial_neighbors=n_initial_neighbors
+        )
+        
+        # Enhance results with summary
+        if results["status"] == "success":
+            results["summary"] = f"Found {results['unique_materials_with_recipes']} materials with recipes through recursive search of {results['visited_materials']} materials"
+        
+        return json.dumps(results, indent=2, default=str)
+        
+    except Exception as e:
+        return json.dumps({
+            "error": str(e),
+            "target_formula": target_formula,
+            "message": "Recursive search failed"
+        }, indent=2)
+
+
 class SKYSynthesisAgent:
     """
     SKY - Synthesis Knowledge Yield Agent
@@ -413,7 +465,8 @@ class SKYSynthesisAgent:
                 search_similar_materials_advanced,
                 get_material_properties,
                 get_synthesis_recipes,
-                analyze_synthesis_parameters
+                analyze_synthesis_parameters,
+                recursive_synthesis_search
             ]
         )
     
@@ -452,9 +505,12 @@ class SKYSynthesisAgent:
             1. First, identify if this is a composition formula (e.g., Fe2O3) or general query
             2. Use search_similar_materials_advanced to find 10 similar materials by composition
             3. Use get_material_properties to understand the materials' characteristics
-            4. Use get_synthesis_recipes for both the target and top 3 similar materials
-            5. If recipes found, use analyze_synthesis_parameters to extract key conditions
-            6. Synthesize findings into actionable recommendations
+            4. Use get_synthesis_recipes for the target material
+            5. IF NO DIRECT RECIPES FOUND:
+               - Use recursive_synthesis_search to perform deep search across neighbor materials
+               - This will explore neighbors-of-neighbors to find adaptable recipes
+            6. If recipes found, use analyze_synthesis_parameters to extract key conditions
+            7. Synthesize findings into actionable recommendations
         
         RESPONSE FORMAT:
         📊 Target Material Analysis
