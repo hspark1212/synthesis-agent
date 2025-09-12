@@ -3,6 +3,8 @@
 **SKY** is an **LLM-powered agent** for materials synthesis analysis and recommendation.  
 It leverages **similarity search on synthesis recipes** from the [Materials Project](https://materialsproject.org/) database to help researchers discover related compounds, structures, and synthesis pathways.
 
+![SKY overview](figs/img.png)
+
 ---
 
 ## 🚀 Features
