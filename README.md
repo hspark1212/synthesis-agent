@@ -5,6 +5,9 @@ It leverages **similarity search on synthesis recipes** from the [Materials Proj
 
 ![SKY overview](figs/img.png)
 
+> [!NOTE]
+> The demo video is available at here: [Demo](https://www.youtube.com/watch?v=ffLqLH87yLo)
+
 ---
 
 ## 🚀 Features
