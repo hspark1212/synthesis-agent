@@ -12,6 +12,7 @@ wheels/
 # Development environment files
 .env
 .venv/
+.vscode/
 
 # Debug files
 demo*
